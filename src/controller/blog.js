@@ -1,14 +1,15 @@
-const { exec } = require('../db/mysql')
+const xss = require('xss')
+const { exec, escape } = require('../db/mysql')
 const getList = (author, keyword) => {
+    author = escape(author)
     let sql = `select * from blogs where 1=1 `
     if(author) {
-        sql += `and author='${author}' `
+        sql += `and author=${author} `
     }
     if(keyword) {
         sql += `and title like '%${keyword}%' `
     }
     sql += `order by createtime desc`
-
     return exec(sql)
 }
 
@@ -21,16 +22,15 @@ const getDetail =(id) => {
 
 const newBlog = (blogData = {}) => {
     //blogData前端提交的数据
-   const title = blogData.title
-   const content = blogData.content
-   const author = blogData.author
+   const title = xss(blogData.title)
+   const content = xss(blogData.content)
+   const author = xss(blogData.author)
    const createTime = Date.now()
 
    const sql = `insert into blogs (title, content, createtime, author)
    values ('${title}', '${content}', '${createTime}', '${author}')`
 
    return exec(sql).then(insertData => {
-      console.log(insertData)
       return {
           id: insertData.insertId
       }
